@@ -36,7 +36,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getRandomValues } from "crypto";
 import { upsertDoctor } from "@/actions/upsert-doctor";
 import { toast } from "sonner";
 
@@ -71,20 +70,24 @@ const formSchema = z
   );
 
 interface UpsertDoctorFormProps {
+  doctor?: typeof doctorsTable.$inferSelect;
   onSuccess?: () => void;
 }
 
-const UpsertDoctorForm = ({ onSuccess }: UpsertDoctorFormProps) => {
+const UpsertDoctorForm = ({ doctor, onSuccess }: UpsertDoctorFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
+    shouldUnregister: true,
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      specialty: "",
-      appointmentPrice: 0,
-      availableFromWeekDay: "1",
-      availableToWeekDay: "5",
-      availableFromTime: "",
-      availableToTime: "",
+      name: doctor?.name ?? "",
+      specialty: doctor?.specialty ?? "",
+      appointmentPrice: doctor?.appointmentPriceInCents
+        ? doctor.appointmentPriceInCents / 100
+        : 0,
+      availableFromWeekDay: doctor?.availableFromWeekDay?.toString() ?? "1",
+      availableToWeekDay: doctor?.availableToWeekDay?.toString() ?? "5",
+      availableFromTime: doctor?.availableFromTime ?? "",
+      availableToTime: doctor?.availableToTime ?? "",
     },
   });
 
