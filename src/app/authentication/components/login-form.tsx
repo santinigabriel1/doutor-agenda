@@ -1,7 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -13,20 +16,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormControl, FormMessage } from "@/components/ui/form";
+import { FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormField } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
   email: z
@@ -37,7 +31,7 @@ const loginSchema = z.object({
   password: z
     .string()
     .trim()
-    .min(8, { message: "Senha deve ter pelo menos 8 caracteres" }),
+    .min(8, { message: "A senha deve ter pelo menos 8 caracteres" }),
 });
 
 const LoginForm = () => {
@@ -66,10 +60,12 @@ const LoginForm = () => {
       },
     );
   };
+
   const handleGoogleLogin = async () => {
     await authClient.signIn.social({
       provider: "google",
       callbackURL: "/dashboard",
+      scopes: ["email", "profile"],
     });
   };
 
@@ -114,7 +110,7 @@ const LoginForm = () => {
             />
           </CardContent>
           <CardFooter>
-            <div className="w-full gap-2 space-y-2">
+            <div className="w-full space-y-2">
               <Button
                 type="submit"
                 className="w-full"

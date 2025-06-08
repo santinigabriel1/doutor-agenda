@@ -1,13 +1,13 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
+  integer,
+  pgEnum,
   pgTable,
   text,
-  timestamp,
-  integer,
   time,
+  timestamp,
   uuid,
-  pgEnum,
-  boolean,
 } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users", {
@@ -16,11 +16,14 @@ export const usersTable = pgTable("users", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull(),
   image: text("image"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  plan: text("plan"),
   createdAt: timestamp("created_at").notNull(),
   updatedAt: timestamp("updated_at").notNull(),
 });
 
-export const usersTablesRelations = relations(usersTable, ({ many }) => ({
+export const usersTableRelations = relations(usersTable, ({ many }) => ({
   usersToClinics: many(usersToClinicsTable),
 }));
 
@@ -115,8 +118,8 @@ export const doctorsTable = pgTable("doctors", {
   name: text("name").notNull(),
   avatarImageUrl: text("avatar_image_url"),
   // 1 - Monday, 2 - Tuesday, 3 - Wednesday, 4 - Thursday, 5 - Friday, 6 - Saturday, 0 - Sunday
-  availableFromWeekDay: integer("available_from_week_day").notNull(), // 1
-  availableToWeekDay: integer("available_to_week_day").notNull(), // 5
+  availableFromWeekDay: integer("available_from_week_day").notNull(),
+  availableToWeekDay: integer("available_to_week_day").notNull(),
   availableFromTime: time("available_from_time").notNull(),
   availableToTime: time("available_to_time").notNull(),
   specialty: text("specialty").notNull(),
@@ -155,12 +158,16 @@ export const patientsTable = pgTable("patients", {
     .$onUpdate(() => new Date()),
 });
 
-export const patientsTableRelations = relations(patientsTable, ({ one }) => ({
-  clinic: one(clinicsTable, {
-    fields: [patientsTable.clinicId],
-    references: [clinicsTable.id],
+export const patientsTableRelations = relations(
+  patientsTable,
+  ({ one, many }) => ({
+    clinic: one(clinicsTable, {
+      fields: [patientsTable.clinicId],
+      references: [clinicsTable.id],
+    }),
+    appointments: many(appointmentsTable),
   }),
-}));
+);
 
 export const appointmentsTable = pgTable("appointments", {
   id: uuid("id").defaultRandom().primaryKey(),
