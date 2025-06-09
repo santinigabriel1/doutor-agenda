@@ -12,12 +12,6 @@ export default async function Home() {
   if (!session) {
     redirect("/login");
   }
-  if (!session.user.clinic) {
-    redirect("/clinic-form");
-  }
-  if (session.user.plan) {
-    redirect("/dashboard");
-  }
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 p-6">
       <div className="mb-8 w-full max-w-3xl text-center">

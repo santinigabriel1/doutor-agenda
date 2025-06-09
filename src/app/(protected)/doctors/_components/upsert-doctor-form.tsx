@@ -1,23 +1,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { NumericFormat } from "react-number-format";
-import { z } from "zod";
 import { useAction } from "next-safe-action/hooks";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { NumericFormat } from "react-number-format";
+import { toast } from "sonner";
+import { z } from "zod";
 
-import { doctorsTable } from "@/db/schema";
-
-import { Input } from "@/components/ui/input";
-import { medicalSpecialties } from "../_constants";
-
+import { upsertDoctor } from "@/actions/upsert-doctor";
+import { Button } from "@/components/ui/button";
 import {
   DialogContent,
-  DialogHeader,
   DialogDescription,
-  DialogTitle,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-
 import {
   Form,
   FormControl,
@@ -26,7 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -36,27 +33,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { upsertDoctor } from "@/actions/upsert-doctor";
-import { toast } from "sonner";
+import { doctorsTable } from "@/db/schema";
+
+import { medicalSpecialties } from "../_constants";
 
 const formSchema = z
   .object({
-    name: z.string().trim().min(1, { message: "Nome é obrigatório." }),
-    specialty: z
-      .string()
-      .trim()
-      .min(1, { message: "Especialidade é obrigatória." }),
-    appointmentPrice: z
-      .number()
-      .min(1, { message: "Preço da consulta é obrigatório." }),
+    name: z.string().trim().min(1, {
+      message: "Nome é obrigatório.",
+    }),
+    specialty: z.string().trim().min(1, {
+      message: "Especialidade é obrigatória.",
+    }),
+    appointmentPrice: z.number().min(1, {
+      message: "Preço da consulta é obrigatório.",
+    }),
     availableFromWeekDay: z.string(),
     availableToWeekDay: z.string(),
-    availableFromTime: z
-      .string()
-      .min(1, { message: "Hora de início é obrigatória." }),
-    availableToTime: z
-      .string()
-      .min(1, { message: "Hora do término é obrigatória." }),
+    availableFromTime: z.string().min(1, {
+      message: "Hora de início é obrigatória.",
+    }),
+    availableToTime: z.string().min(1, {
+      message: "Hora de término é obrigatória.",
+    }),
   })
   .refine(
     (data) => {
@@ -70,11 +69,16 @@ const formSchema = z
   );
 
 interface UpsertDoctorFormProps {
+  isOpen: boolean;
   doctor?: typeof doctorsTable.$inferSelect;
   onSuccess?: () => void;
 }
 
-const UpsertDoctorForm = ({ doctor, onSuccess }: UpsertDoctorFormProps) => {
+const UpsertDoctorForm = ({
+  doctor,
+  onSuccess,
+  isOpen,
+}: UpsertDoctorFormProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     shouldUnregister: true,
     resolver: zodResolver(formSchema),
@@ -90,6 +94,22 @@ const UpsertDoctorForm = ({ doctor, onSuccess }: UpsertDoctorFormProps) => {
       availableToTime: doctor?.availableToTime ?? "",
     },
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        name: doctor?.name ?? "",
+        specialty: doctor?.specialty ?? "",
+        appointmentPrice: doctor?.appointmentPriceInCents
+          ? doctor.appointmentPriceInCents / 100
+          : 0,
+        availableFromWeekDay: doctor?.availableFromWeekDay?.toString() ?? "1",
+        availableToWeekDay: doctor?.availableToWeekDay?.toString() ?? "5",
+        availableFromTime: doctor?.availableFromTime ?? "",
+        availableToTime: doctor?.availableToTime ?? "",
+      });
+    }
+  }, [isOpen, form, doctor]);
 
   const upsertDoctorAction = useAction(upsertDoctor, {
     onSuccess: () => {
@@ -224,7 +244,7 @@ const UpsertDoctorForm = ({ doctor, onSuccess }: UpsertDoctorFormProps) => {
                 <FormLabel>Dia final de disponibilidade</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  defaultValue={field.value?.toString()}
                 >
                   <FormControl>
                     <SelectTrigger className="w-full">
